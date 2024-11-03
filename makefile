@@ -1,30 +1,72 @@
-
-LINUX_CFLAGS = -Wall -Werror -Wextra -include oeuf/oeuf.h
-OUTPUT = sas
 CC = gcc
+LD = gcc
 
+CFLAGS = -Iinclude -Ilibs/oeuf/
+LDFLAGS =
 
+DEBUG_FLAG = -g
 
-all: 
-	make setup
-	make linux
+SRC = main.c $(wildcard src/*.c) $(wildcard src/*/*.c) $(wildcard src/*/*/*.c) $(wildcard src/*/*/*/*.c)
+BIN = $(SRC:.c=.o) libs/oeuf/out/liboe.a
+
+OUT_DIR = build
+OUT_NAME = cpsm
+
+ifeq ($(OS),Windows_NT)
+		OUT = $(OUT_DIR)/$(OUT_NAME).exe
+else
+	OUT = $(OUT_DIR)/$(OUT_NAME)
+endif
+
+all: $(OUT) run
+
+build: $(OUT)
+
+$(OUT): $(BIN)
+ifeq ($(OS),Windows_NT)
+	if not exist $(OUT_DIR) mkdir $(OUT_DIR)
+	if not exist libs mkdir libs
+else
+	mkdir -p $(OUT_DIR)
+	mkdir -p libs
+endif
+	$(LD) $(LDFLAGS) $(BIN) -o $(OUT)
+
+%.o: %.c
+	$(CC) -c $< -o $@ $(CFLAGS)
 
 setup:
-	if [ ! -d ./oeuf ]; then \
-		git clone https://github.com/asqel/oeuf.git oeuf; \
-	else \
-		git -C oeuf pull; \
+ifeq ($(OS),Windows_NT)
+	if not exist $(OUT_DIR) git clone https://github.com/asqel/oeuf.git libs/oeuf
+	git -C libs/oeuf pull
+	make -C libs/oeuf win
+else
+	if [ ! -d libs/oeuf ]; then \
+		git clone https://github.com/asqel/oeuf.git libs/oeuf; \
 	fi
-	make -C oeuf linux
+	git -C libs/oeuf pull
+	make -C libs/oeuf linux
+endif
 
+run:
+	./$(OUT)
 
-linux:
-	$(CC) main.c $$(find src -name "*.c") oeuf/out/liboe.a $(LINUX_CFLAGS) -o $(OUTPUT)
+add_debug_flags:
+	CFLAGS += $(DEBUG_FLAG)
 
+debug: add_debug_flags build
+	valgrind $(OUT)
 
-profan:
-	olivine build.olv
+clean:
+ifeq ($(OS),Windows_NT)
+	powershell -NoProfile -Command rm -r -force $(BIN)
+else
+	rm -rf $(BIN)
+endif
 
-
-clea:
-	rm sas
+fclean: clean
+ifeq ($(OS),Windows_NT)
+	powershell -NoProfile -Command rm -r -force $(OUT)
+else
+	rm -rf $(OUT)
+endif

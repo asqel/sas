@@ -1,1 +1,0 @@
-tcc !(search -e c -r src) main.c -o sas.elf

@@ -2,19 +2,19 @@
 #define LEXER_H
 
 #include <stdint.h>
-#include "../oeuf/oeuf.h"
+#include "oeuf.h"
 
 typedef struct {
-	i32 line;
+	u32 line;
 	char type;
 	union {
-		uint32_t i;
+		u64 i;
 		double f;
 		char *s;
-		i16 sy;
+		u16 sy;
 	}value;
 } token_t;
 
-token_t *lexe(char *text, char *path);
+token_t *lexe(char *text, char *path, int *len);
 
 #endif
