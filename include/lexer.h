@@ -17,4 +17,9 @@ typedef struct {
 
 token_t *lexe(char *text, char *path);
 
+enum token_types {
+	token_null_t,
+	token_int_t
+};
+
 #endif
